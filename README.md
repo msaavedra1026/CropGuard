@@ -113,4 +113,4 @@ Instead of training a model on crop images, we use OpenAI's CLIP model which und
 
 ## Team
 
-Built at the ASU Hackathon with Voxel51
+Built at the ASU Hackathon with Voxel51 in collaboration with @ayeeta
