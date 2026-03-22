@@ -1,0 +1,18 @@
+{
+  "expo": {
+    "name": "CropGuard",
+    "slug": "cropguard",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "scheme": "cropguard",
+    "splash": {
+      "backgroundColor": "#1C1A14"
+    },
+    "plugins": ["expo-camera", "expo-router"],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

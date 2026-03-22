@@ -1,0 +1,30 @@
+# Environment
+.env
+backend/.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+venv/
+.venv/
+
+# Node / Expo
+node_modules/
+mobile/.expo/
+mobile/dist/
+mobile/android/
+mobile/ios/
+
+# FiftyOne
+.fiftyone/
+
+# Temp files
+/tmp/cropguard/
+
+# Data caches (regenerated on startup)
+data/demo_cache/*.json
+
+# OS
+.DS_Store
+Thumbs.db

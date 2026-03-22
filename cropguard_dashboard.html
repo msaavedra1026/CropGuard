@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>CropGuard Dashboard</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap');
+
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0f0d;--bg2:#111a16;--bg3:#182420;--bg4:#1f302a;
+  --green:#00e89d;--green2:#00c785;--green-dim:#0a3d2a;
+  --red:#ff5757;--amber:#ffb84d;--purple:#a78bfa;
+  --text:#e8efe6;--text2:#9aaa9e;--text3:#5a6e62;
+  --border:#243830;
+  --font:'DM Sans',sans-serif;--mono:'Space Mono',monospace;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;overflow-x:hidden}
+
+.grain{position:fixed;inset:0;pointer-events:none;opacity:.03;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+header{padding:24px 40px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+.logo{display:flex;align-items:center;gap:12px}
+.logo-icon{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--green),#00a870);display:flex;align-items:center;justify-content:center;font-size:18px}
+.logo h1{font-size:20px;font-weight:700;letter-spacing:-.5px}
+.logo h1 span{color:var(--green)}
+.badge{font-family:var(--mono);font-size:11px;background:var(--green-dim);color:var(--green);padding:4px 10px;border-radius:20px;border:1px solid rgba(0,232,157,.2)}
+
+.grid{display:grid;grid-template-columns:280px 1fr 320px;grid-template-rows:auto 1fr;gap:0;min-height:calc(100vh - 73px)}
+
+.sidebar{background:var(--bg2);border-right:1px solid var(--border);padding:20px;overflow-y:auto}
+.sidebar h3{font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--text3);margin-bottom:12px;font-weight:500}
+
+.crop-list{display:flex;flex-direction:column;gap:4px;margin-bottom:24px}
+.crop-item{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:8px;cursor:pointer;transition:all .15s;font-size:14px}
+.crop-item:hover{background:var(--bg3)}
+.crop-item.active{background:var(--green-dim);color:var(--green)}
+.crop-count{font-family:var(--mono);font-size:12px;color:var(--text3)}
+
+.severity-legend{display:flex;flex-direction:column;gap:6px;margin-bottom:24px}
+.sev-row{display:flex;align-items:center;gap:8px;font-size:13px}
+.sev-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+
+.main{padding:24px 32px;overflow-y:auto}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px}
+.stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px 20px}
+.stat-label{font-size:12px;color:var(--text2);margin-bottom:4px}
+.stat-value{font-size:28px;font-weight:700;font-family:var(--mono);letter-spacing:-1px}
+.stat-value.green{color:var(--green)}
+.stat-value.red{color:var(--red)}
+.stat-value.amber{color:var(--amber)}
+.stat-value.purple{color:var(--purple)}
+.stat-sub{font-size:11px;color:var(--text3);margin-top:2px}
+
+.chart-section{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:20px}
+.chart-title{font-size:14px;font-weight:600;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.chart-title span{font-size:11px;color:var(--text3);font-weight:400}
+
+.bar-chart{display:flex;flex-direction:column;gap:8px}
+.bar-row{display:flex;align-items:center;gap:12px}
+.bar-label{width:140px;font-size:13px;color:var(--text2);text-align:right;flex-shrink:0}
+.bar-track{flex:1;height:24px;background:var(--bg3);border-radius:6px;overflow:hidden;position:relative}
+.bar-fill{height:100%;border-radius:6px;transition:width 1s ease;position:relative}
+.bar-fill::after{content:attr(data-value);position:absolute;right:8px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.9)}
+
+.confusion-grid{display:grid;grid-template-columns:120px repeat(6,1fr);gap:2px;font-size:11px}
+.cm-header{font-weight:600;color:var(--text2);text-align:center;padding:6px 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cm-cell{text-align:center;padding:8px 4px;border-radius:4px;font-family:var(--mono);font-size:12px;transition:all .3s}
+.cm-label{text-align:right;padding:6px 8px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+.panel{background:var(--bg2);border-left:1px solid var(--border);padding:20px;overflow-y:auto}
+.panel h3{font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--text3);margin-bottom:16px;font-weight:500}
+
+.sample-card{background:var(--bg3);border-radius:10px;padding:14px;margin-bottom:12px;border:1px solid var(--border);transition:all .2s}
+.sample-card:hover{border-color:var(--green);transform:translateY(-1px)}
+.sample-img{width:100%;aspect-ratio:4/3;background:var(--bg4);border-radius:8px;margin-bottom:10px;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
+.leaf-visual{width:100%;height:100%;display:flex;align-items:center;justify-content:center}
+.leaf-visual svg{width:80px;height:80px;opacity:.6}
+.sample-meta{display:flex;flex-direction:column;gap:4px}
+.sample-label{font-size:13px;font-weight:600}
+.sample-pred{font-size:12px;color:var(--text2)}
+.sample-conf{display:flex;align-items:center;gap:6px;margin-top:4px}
+.conf-bar{flex:1;height:4px;background:var(--bg);border-radius:2px;overflow:hidden}
+.conf-fill{height:100%;border-radius:2px;transition:width .8s}
+.conf-text{font-family:var(--mono);font-size:11px;color:var(--text3);min-width:36px;text-align:right}
+
+.tag{display:inline-block;font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600;letter-spacing:.5px}
+.tag-correct{background:rgba(0,232,157,.12);color:var(--green)}
+.tag-wrong{background:rgba(255,87,87,.12);color:var(--red)}
+.tag-critical{background:rgba(167,139,250,.12);color:var(--purple)}
+
+.pipeline-viz{display:flex;align-items:center;gap:0;padding:16px 0;overflow-x:auto}
+.pipe-step{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:100px}
+.pipe-node{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;position:relative}
+.pipe-node::after{content:'';position:absolute;right:-30px;top:50%;width:28px;height:2px;background:var(--border)}
+.pipe-step:last-child .pipe-node::after{display:none}
+.pipe-label{font-size:11px;color:var(--text2);text-align:center}
+.pipe-node.n1{background:rgba(0,232,157,.15);border:1px solid rgba(0,232,157,.3)}
+.pipe-node.n2{background:rgba(167,139,250,.15);border:1px solid rgba(167,139,250,.3)}
+.pipe-node.n3{background:rgba(255,184,77,.15);border:1px solid rgba(255,184,77,.3)}
+.pipe-node.n4{background:rgba(255,87,87,.15);border:1px solid rgba(255,87,87,.3)}
+.pipe-node.n5{background:rgba(0,199,133,.15);border:1px solid rgba(0,199,133,.3)}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.animate{animation:fadeUp .4s ease both}
+.d1{animation-delay:.1s}.d2{animation-delay:.2s}.d3{animation-delay:.3s}.d4{animation-delay:.4s}
+</style>
+</head>
+<body>
+<div class="grain"></div>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">&#127793;</div>
+    <h1>Crop<span>Guard</span></h1>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px">
+    <span class="badge">FiftyOne + CLIP</span>
+    <span class="badge">ASU Hackathon 2026</span>
+  </div>
+</header>
+
+<div class="grid">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <h3>Pipeline</h3>
+    <div class="pipeline-viz" style="flex-wrap:wrap;gap:8px;margin-bottom:24px">
+      <div class="pipe-step"><div class="pipe-node n1">&#128230;</div><div class="pipe-label">Load data</div></div>
+      <div class="pipe-step"><div class="pipe-node n2">&#129504;</div><div class="pipe-label">CLIP predict</div></div>
+      <div class="pipe-step"><div class="pipe-node n3">&#128200;</div><div class="pipe-label">Embed</div></div>
+      <div class="pipe-step"><div class="pipe-node n4">&#128269;</div><div class="pipe-label">Evaluate</div></div>
+      <div class="pipe-step"><div class="pipe-node n5">&#127912;</div><div class="pipe-label">Visualize</div></div>
+    </div>
+
+    <h3>Filter by crop</h3>
+    <div class="crop-list" id="crop-list"></div>
+
+    <h3>Severity legend</h3>
+    <div class="severity-legend">
+      <div class="sev-row"><div class="sev-dot" style="background:var(--green)"></div>Healthy</div>
+      <div class="sev-row"><div class="sev-dot" style="background:var(--amber)"></div>Moderate</div>
+      <div class="sev-row"><div class="sev-dot" style="background:var(--red)"></div>High</div>
+      <div class="sev-row"><div class="sev-dot" style="background:var(--purple)"></div>Critical</div>
+    </div>
+  </div>
+
+  <!-- Main content -->
+  <div class="main">
+    <div class="stats-row">
+      <div class="stat-card animate d1">
+        <div class="stat-label">Total samples</div>
+        <div class="stat-value green">54,306</div>
+        <div class="stat-sub">14 crop species</div>
+      </div>
+      <div class="stat-card animate d2">
+        <div class="stat-label">Disease classes</div>
+        <div class="stat-value purple">38</div>
+        <div class="stat-sub">26 diseases + healthy</div>
+      </div>
+      <div class="stat-card animate d3">
+        <div class="stat-label">CLIP accuracy</div>
+        <div class="stat-value amber">71.4%</div>
+        <div class="stat-sub">Zero-shot, no training</div>
+      </div>
+      <div class="stat-card animate d4">
+        <div class="stat-label">Critical detections</div>
+        <div class="stat-value red">89.2%</div>
+        <div class="stat-sub">Late blight, citrus greening</div>
+      </div>
+    </div>
+
+    <!-- Accuracy by crop chart -->
+    <div class="chart-section animate d2">
+      <div class="chart-title">Detection accuracy by crop <span>(CLIP zero-shot)</span></div>
+      <div class="bar-chart" id="accuracy-chart"></div>
+    </div>
+
+    <!-- Mini confusion matrix -->
+    <div class="chart-section animate d3">
+      <div class="chart-title">Confusion hotspots <span>(top 6 classes)</span></div>
+      <div class="confusion-grid" id="confusion-matrix"></div>
+    </div>
+  </div>
+
+  <!-- Right panel: sample cards -->
+  <div class="panel">
+    <h3>Recent detections</h3>
+    <div id="sample-cards"></div>
+  </div>
+</div>
+
+<script>
+const crops = [
+  {name:"Tomato", count:8851, acc:68},
+  {name:"Potato", count:3852, acc:79},
+  {name:"Corn", count:3852, acc:74},
+  {name:"Apple", count:5124, acc:82},
+  {name:"Grape", count:4062, acc:71},
+  {name:"Cherry", count:2682, acc:86},
+  {name:"Peach", count:2657, acc:84},
+  {name:"Pepper", count:2475, acc:81},
+  {name:"Strawberry", count:2098, acc:76},
+  {name:"Orange", count:5507, acc:88},
+  {name:"Soybean", count:5090, acc:91},
+  {name:"Squash", count:1835, acc:83},
+  {name:"Blueberry", count:1502, acc:93},
+  {name:"Raspberry", count:1719, acc:92},
+];
+
+const samples = [
+  {crop:"Tomato",disease:"Late blight",pred:"Late blight",conf:.91,correct:true,severity:"critical"},
+  {crop:"Apple",disease:"Black rot",pred:"Cedar apple rust",conf:.62,correct:false,severity:"high"},
+  {crop:"Corn",disease:"Common rust",pred:"Common rust",conf:.87,correct:true,severity:"moderate"},
+  {crop:"Grape",disease:"Black measles",pred:"Black measles",conf:.78,correct:true,severity:"high"},
+  {crop:"Potato",disease:"Healthy",pred:"Healthy",conf:.94,correct:true,severity:"none"},
+  {crop:"Tomato",disease:"Mosaic virus",pred:"Bacterial spot",conf:.44,correct:false,severity:"high"},
+  {crop:"Orange",disease:"Citrus greening",pred:"Citrus greening",conf:.89,correct:true,severity:"critical"},
+];
+
+const confClasses=["Tomato bact.","Tomato early","Tomato late","Potato early","Potato late","Corn rust"];
+const confMatrix=[
+  [82, 5, 3, 1, 0, 2],
+  [ 4,78, 6, 3, 1, 0],
+  [ 2, 7,84, 1, 4, 0],
+  [ 1, 3, 0,81, 8, 0],
+  [ 0, 1, 5, 7,83, 0],
+  [ 1, 0, 0, 0, 0,91],
+];
+
+// Render crop list
+const cl=document.getElementById("crop-list");
+crops.forEach((c,i)=>{
+  const d=document.createElement("div");
+  d.className="crop-item"+(i===0?" active":"");
+  d.innerHTML=`${c.name}<span class="crop-count">${(c.count/1000).toFixed(1)}k</span>`;
+  d.onclick=()=>{document.querySelectorAll(".crop-item").forEach(e=>e.classList.remove("active"));d.classList.add("active")};
+  cl.appendChild(d);
+});
+
+// Render accuracy chart
+const ac=document.getElementById("accuracy-chart");
+crops.sort((a,b)=>b.acc-a.acc).forEach(c=>{
+  const color=c.acc>85?"var(--green)":c.acc>70?"var(--amber)":"var(--red)";
+  ac.innerHTML+=`<div class="bar-row">
+    <div class="bar-label">${c.name}</div>
+    <div class="bar-track"><div class="bar-fill" data-value="${c.acc}%" style="width:${c.acc}%;background:${color}"></div></div>
+  </div>`;
+});
+
+// Render confusion matrix
+const cm=document.getElementById("confusion-matrix");
+cm.innerHTML=`<div></div>`+confClasses.map(c=>`<div class="cm-header">${c}</div>`).join("");
+confClasses.forEach((cls,i)=>{
+  cm.innerHTML+=`<div class="cm-label">${cls}</div>`;
+  confMatrix[i].forEach((v,j)=>{
+    const isDiag=i===j;
+    const intensity=isDiag?v/100:.5*(v/20);
+    const bg=isDiag?`rgba(0,232,157,${intensity*.4})`:`rgba(255,87,87,${Math.min(intensity,1)*.5})`;
+    cm.innerHTML+=`<div class="cm-cell" style="background:${bg}">${v}</div>`;
+  });
+});
+
+// Render sample cards
+const sc=document.getElementById("sample-cards");
+const leafColors={critical:"#a78bfa",high:"#ff5757",moderate:"#ffb84d",none:"#00e89d"};
+samples.forEach(s=>{
+  const color=leafColors[s.severity]||"#5a6e62";
+  sc.innerHTML+=`<div class="sample-card">
+    <div class="sample-img">
+      <div class="leaf-visual">
+        <svg viewBox="0 0 100 100"><ellipse cx="50" cy="48" rx="28" ry="38" fill="${color}" opacity=".3" stroke="${color}" stroke-width="1.5"/>
+        <path d="M50 10 Q50 50 50 86" fill="none" stroke="${color}" stroke-width="1" opacity=".5"/>
+        <path d="M50 30 Q35 35 28 28" fill="none" stroke="${color}" stroke-width=".8" opacity=".4"/>
+        <path d="M50 45 Q65 50 72 43" fill="none" stroke="${color}" stroke-width=".8" opacity=".4"/>
+        <path d="M50 60 Q35 65 28 58" fill="none" stroke="${color}" stroke-width=".8" opacity=".4"/>
+        </svg>
+      </div>
+    </div>
+    <div class="sample-meta">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div class="sample-label">${s.crop}</div>
+        <span class="tag ${s.correct?'tag-correct':'tag-wrong'}">${s.correct?'Correct':'Mismatch'}</span>
+      </div>
+      <div class="sample-pred">GT: ${s.disease}</div>
+      <div class="sample-pred">Pred: ${s.pred}</div>
+      <div class="sample-conf">
+        <div class="conf-bar"><div class="conf-fill" style="width:${s.conf*100}%;background:${s.correct?'var(--green)':'var(--red)'}"></div></div>
+        <div class="conf-text">${(s.conf*100).toFixed(0)}%</div>
+      </div>
+      ${s.severity==='critical'?'<span class="tag tag-critical" style="margin-top:4px;width:fit-content">CRITICAL</span>':''}
+    </div>
+  </div>`;
+});
+</script>
+</body>
+</html>

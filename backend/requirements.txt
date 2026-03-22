@@ -1,0 +1,9 @@
+fiftyone
+fastapi
+uvicorn
+python-multipart
+sqlmodel
+python-dotenv
+pillow
+numpy
+requests
